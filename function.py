@@ -151,3 +151,44 @@ def get_decade(year):
     elif 2017 <= year < 2021:
         return '2017-21'
 
+
+def update_data(county_rate, county_counts):
+    """
+    Adds missing counties from the unemployment data to the Bigfoot sightings data,
+    filling in missing sighting counts with zeros.
+
+    Args:
+    county_rate (DataFrame): A DataFrame with 'county_state' and unemployment data.
+    county_counts (DataFrame): A DataFrame with 'county_state' and yearly sighting counts.
+
+    Returns:
+    DataFrame: Updated DataFrame with all counties and sighting counts, filling missing counts with zero.
+
+    Example:
+    >>> data1 = pd.DataFrame({
+    ...     'county_state': ['County A, State1', 'County B, State2'],
+    ...     'unemployment_rate': [5.0, 6.0]
+    ... })
+    >>> data2 = pd.DataFrame({
+    ...     'county_state': ['County A, State1'],
+    ...     '2020': [3],
+    ...     '2021': [4]
+    ... })
+    >>> result = update_data(data1,data2)
+    >>> result['2020'][1] == 0 and result['2021'][1] == 0
+    True
+    """
+    # Identify missing counties in the sightings data
+    missing_counties = set(county_rate['county_state']) - set(county_counts['county_state'])
+
+    # Create a new DataFrame for these missing counties with zero sightings
+    year_columns = [col for col in county_counts.columns if col != 'county_state']
+    missing_data = {year: [0]*len(missing_counties) for year in year_columns}
+    missing_data['county_state'] = list(missing_counties)
+
+    missing_df = pd.DataFrame(missing_data)
+
+    # Append the new DataFrame to the existing sightings data
+    county_updated = pd.concat([county_counts, missing_df], ignore_index=True)
+
+    return county_updated
